@@ -1,0 +1,97 @@
+START ValidateAgeEligibility (Age, RaceDistance, *ValidAge)
+    ValidAge = False
+     IF   RaceDistance = 5 THEN
+        IF Age >= 8 THEN
+            ValidAge = True
+         ENDIF
+     ELSE
+         IF RaceDistance=10 THEN
+            IF Age >= 14 THEN
+                ValidAge = True
+              ENDIF
+         ELSE 
+            IF RaceDistance= 21  THEN
+                IF Age >= 16 THEN
+                    ValidAge = True
+                 ENDIF
+             ELSE
+                IF RaceDistance = 42 THEN
+                    IF Age >= 20 THEN
+                        ValidAge = True
+                     ENDIF
+                ENDIF
+             ENDIF
+        ENDIF
+    ENDIF
+    IF ValidAge = False THEN
+        Print "Age not eligible for selected race distance "
+    ENDIF
+    RETURN ValidAge
+ END
+
+START DetermineAgeCategory (Age,*AgeCategory)
+     IF Age >= 60 THEN
+          AgeCategory = "Senior"
+      ELSE
+        IF Age >= 40 THEN
+             AgeCategory = "Veteran"
+        ELSE
+            IF Age >= 18 THEN
+                AgeCategory = "Open"
+            ELSE
+                AgeCategory = "Junior"
+            ENDIF
+        ENDIF
+    ENDIF
+    RETURN AgeCategory
+END
+
+ START DetermineBaseFee (RaceDistance, *BaseFee)
+     IF RaceDistance = 5 THEN
+        BaseFee = BASEFEE_5KM
+    ELSE
+        IF  RaceDistance = 10 THEN
+            BaseFee=BASEFEE_10KM
+        ELSE
+            IF RaceDistance = 21 THEN
+                BaseFee = BASEFEE_HALFMARATHON
+             ELSE
+                 IF RaceDistance = 42 THEN
+                    BaseFee = BASEFEE_MARATHON
+                ELSE
+                    BaseFee = 0
+                ENDIF
+             ENDIF
+        ENDIF
+    ENDIF
+     RETURN BaseFee
+ END
+
+START DetermineHighestDiscount (Age, ClubMember, RegistrationDate, *HighestDiscount)
+     HighestDiscount = 0
+     IF Age >= 60 THEN
+        HighestDiscount = DISCOUNT_SENIOR
+    ELSE
+         IF Age < 18 THEN
+            HighestDiscount = DISCOUNT_UNDER18
+        ENDIF
+    ENDIF
+    IF ClubMember = True THEN
+        IF HighestDiscount < DISCOUNT_CLUBMEMBER THEN
+            HighestDiscount = DISCOUNT_CLUBMEMBER
+         ENDIF
+    ENDIF
+    IF RegistrationDate <= EVENT_DATE - 30 THEN
+        IF HighestDiscount < DISCOUNT_EARLYBIRD THEN
+            HighestDiscount = DISCOUNT_EARLYBIRD
+         ENDIF
+    ENDIF
+    RETURN HighestDiscount
+END
+ START CalculateFinalFee (RaceDistance, Age, ClubMember, RegistrationDate, *FinalFee)
+    Process DetermineBaseFee (RaceDistance, *BaseFee)
+    Process DetermineHighestDiscount (Age, ClubMember, RegistrationDate, *HighestDiscount)
+    DiscountAmount = BaseFee * HighestDiscount
+    FinalFee = BaseFee - DiscountAmount
+    RETURN FinalFee
+END 
